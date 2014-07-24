@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:cmis="http://www.mulesoft.org/schema/mule/cmis" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+http://www.mulesoft.org/schema/mule/cmis http://www.mulesoft.org/schema/mule/cmis/current/mule-cmis.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd" version="EE-3.5.1">
+    <apikit:config name="alfrescoContentMetaData-config" raml="alfrescoContentMetaData.raml" consoleEnabled="true" consolePath="console" doc:name="Router"/>
+    <apikit:mapping-exception-strategy name="alfrescoContentMetaData-apiKitGlobalExceptionMapping" doc:name="Mapping Exception Strategy">
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="415">
+            <apikit:exception value="org.mule.module.apikit.exception.UnsupportedMediaTypeException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Unsupported media type&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
+    <cmis:config name="CMIS" username="admin" password="admin" baseUrl="http://localhost:9090/alfresco/api/-default-/public/cmis/versions/1.1/atom"  doc:name="CMIS"  repositoryId="-default-" useAlfrescoExtension="true"/>
+    <flow name="alfrescoContentMetaData-main" doc:name="alfrescoContentMetaData-main">
+        <http:inbound-endpoint address="http://localhost:8080/mule/test/content" doc:name="HTTP" exchange-pattern="request-response"/>
+        <apikit:router config-ref="alfrescoContentMetaData-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="alfrescoContentMetaData-apiKitGlobalExceptionMapping" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="get:/props:alfrescoContentMetaData-config" doc:name="get:/props:alfrescoContentMetaData-config">
+        <cmis:get-object-by-id config-ref="CMIS"  doc:name="CMIS"  objectId="#[groovy:message.getProperty('nodeRef',org.mule.api.transport.PropertyScope.INBOUND)]" connectionTimeout="	"/>
+        <component class="com.test.mule.alfresco.cmis.content.GetContentProps" doc:name="Java"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+     <!--   <set-payload value="{&#xA;  &quot;title&quot; : &quot;test content&quot;,&#xA;  &quot;name&quot; : &quot;test.ppt&quot;,&#xA;  &quot;creator&quot; : &quot;admin&quot;,&#xA;    &quot;description&quot; : &quot;My first RAML file&quot;&#xA;}" doc:name="Set Payload"/>
+       -->
+    </flow>
+</mule>

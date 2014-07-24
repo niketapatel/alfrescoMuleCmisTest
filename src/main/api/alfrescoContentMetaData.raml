@@ -1,0 +1,38 @@
+#%RAML 0.8
+title: Alfresco get content properties
+version: 1.0
+baseUri: http://localhost:8080/mule/test/content
+mediaType: application/json
+/props:
+  displayName: getContentProperties
+  get:
+    description: Get given content properties
+    queryParameters:
+      nodeRef:
+        type: string
+        example: "78d05557-29ee-4c51-b8cc-378e3bfbe186"
+    responses:    
+      200:
+        body:  
+          application/json:
+            example: |
+              {
+                "title" : "test content",
+                "name" : "test.ppt",
+                "creator" : "admin",
+                  "description" : "My first RAML file"
+              }
+      500:
+        description: 
+          Given noderef is not valid
+        body:    
+          application/json:
+            example: |
+              {
+                "status" : "Please check your noderef."
+              }
+            
+      
+        
+    
+  
